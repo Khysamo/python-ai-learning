@@ -7,7 +7,7 @@ Desde los fundamentos del lenguaje hasta el desarrollo de agentes con LLMs.
 
 | Fase | Contenido | Estado |
 |------|-----------|--------|
-| Fase 1 | Fundamentos de Python + Proyecto API del Clima | 🔄 En progreso |
+| Fase 1 | Fundamentos de Python + Proyecto API del Clima | ✅ Completado |
 | Fase 2 | Análisis de Datos con pandas y matplotlib | ⏳ Pendiente |
 | Fase 3 | Machine Learning con scikit-learn | ⏳ Pendiente |
 | Fase 4 | Deep Learning con PyTorch | ⏳ Pendiente |
