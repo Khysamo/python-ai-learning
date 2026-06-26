@@ -183,3 +183,4 @@ cython_debug/
 ._*
 .Spotlight-V100
 .Trashes
+clima_datos.csv

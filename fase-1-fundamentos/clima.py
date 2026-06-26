@@ -1,43 +1,75 @@
-import os
 import csv
-import requests 
-from dotenv import load_dotenv
+import requests
+import os
 
-load_dotenv()
+GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
+CLIMA_URL = "https://api.open-meteo.com/v1/forecast"
 
-API_KEY = os.getenv("OPENWEATHER_API_KEY")
-BASE_URL = "https://api.openweathermap.org/data/2.5/weather"
-
-def obtener_clima(ciudad: str) -> dict:
+def obtener_coordenadas(ciudad: str) -> tuple[float, float]:
     parametros = {
-        "q": ciudad,
-        "appid": API_KEY,
-        "units": "metric",
-        "lang": "es"
+        "name": ciudad,
+        "count": 1,
+        "language": "es",
+        "format": "json"
     }
-    respuesta = requests.get(BASE_URL, params=parametros)
+    respuesta = requests.get(GEOCODING_URL, params=parametros)
     respuesta.raise_for_status()
-    return respuesta.json()
+    resultados = respuesta.json()["results"]
+    return resultados[0]["latitude"], resultados[0]["longitude"]
 
-def guardar_en_csv(datos: dict, nombre_archivo: str) -> None:
+def obtener_clima(latitud: float, longitud: float) -> dict:
+    parametros = {
+        "latitude": latitud,
+        "longitude": longitud,
+        "current": "temperature_2m,relative_humidity_2m,wind_speed_10m,precipitation",
+        "timezone": "auto"
+    }
+    respuesta = requests.get(CLIMA_URL, params=parametros)
+    respuesta.raise_for_status()
+    return respuesta.json()["current"]
+
+def guardar_en_csv(ciudad: str, datos: dict, nombre_archivo: str) -> None:
+    archivo_existe = os.path.exists(nombre_archivo)
     with open(nombre_archivo, mode="a", newline="", encoding="utf-8") as archivo:
         escritor = csv.writer(archivo)
-        escritor.writerow([
-            datos["name"],
-            datos["main"]["temp"],
-            datos["main"]["humidity"],
-            datos["weather"][0]["description"]
-        ])
+        if not archivo_existe:
+            escritor.writerow([
+                "Ciudad",
+                "Temperatura (°C)",
+                "Humedad (%)",
+                "Viento (km/h)",
+                "Precipitación (mm)"
+            ]) 
+            escritor.writerow([
+                ciudad,
+                datos["temperature_2m"],
+                datos["relative_humidity_2m"],
+                datos["wind_speed_10m"],
+                datos["precipitation"]
+            ])
+        else:
+            escritor.writerow([
+                ciudad,
+                datos["temperature_2m"],
+                datos["relative_humidity_2m"],
+                datos["wind_speed_10m"],
+                datos["precipitation"]
+            ])
+    
+
 
 def main() -> None:
-    ciudad = input("¿De qué ciudad te gustaria saber el clima?")
-    datos = obtener_clima(ciudad)
-    guardar_en_csv(datos, "clima_datos.csv")
-    print(f"Ciudad: {datos['name']}")
-    print(f"Temperatura: {datos['main']['temp']}°C")
-    print(f"Humedad: {datos['main']['humidity']}%")
-    print(f"Condicion: {datos['weather'][0]['description']}")
+    ciudad = input("¿De que ciudad te gustaria saber el clima?")
+    latitud, longitud = obtener_coordenadas(ciudad)
+    datos = obtener_clima(latitud, longitud)
+    guardar_en_csv(ciudad, datos, "clima_datos.csv")
+    print(f"Ciudad: {ciudad}")
+    print(f"Temperatura: {datos['temperature_2m']}°C")
+    print(f"Humedad: {datos['relative_humidity_2m']}%")
+    print(f"Viento: {datos['wind_speed_10m']} km/h")
+    print(f"Precipitación: {datos['precipitation']}mm")
 
 
 if __name__ == "__main__":
     main()
+
